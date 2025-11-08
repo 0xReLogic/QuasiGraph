@@ -28,5 +28,5 @@ else()
 endif()
 
 # Simple test runner without GTest
-add_executable(simple_tests simple_test_runner.cpp)
-target_link_libraries(simple_tests QuasiGraph)
+add_executable(basic_tests basic_tests.cpp)
+target_link_libraries(basic_tests QuasiGraph)
