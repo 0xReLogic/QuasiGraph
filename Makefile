@@ -82,6 +82,16 @@ run-bitparallel: bitparallel-bench
 	@echo "Running bit-parallel SIMD AVX2 benchmark..."
 	./benchmarks/bitparallel_bench
 
+# Vertex ordering benchmark
+ordering-bench: library
+	@echo "Building vertex ordering benchmark..."
+	$(CXX) $(CXXFLAGS) -Iinclude -o benchmarks/ordering_bench benchmarks/ordering_bench.cpp -L. -lquasigraph
+	@echo "Ordering benchmark built: benchmarks/ordering_bench"
+
+run-ordering: ordering-bench
+	@echo "Running vertex ordering benchmark..."
+	./benchmarks/ordering_bench
+
 # Install (simple version)
 install: library
 	@echo "Installing QuasiGraph..."

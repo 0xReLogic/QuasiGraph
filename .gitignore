@@ -92,3 +92,5 @@ config.local.*
 # Generated files
 generated/
 auto/
+benchmarks/parallel_bench
+test/basic_tests

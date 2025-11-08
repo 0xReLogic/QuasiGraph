@@ -6,6 +6,7 @@
 
 #include "QuasiGraph/IndependentSet.h"
 #include "QuasiGraph/Graph.h"
+#include "QuasiGraph/ParallelBnB.h"
 #include <algorithm>
 #include <queue>
 #include <stack>
@@ -13,6 +14,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <bitset>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 namespace QuasiGraph {
 
@@ -20,6 +24,8 @@ IndependentSetSolver::IndependentSetSolver(IndependentSetAlgorithm algorithm)
     : algorithm_(algorithm), 
       time_limit_(std::chrono::milliseconds(60000)),
       max_iterations_(1000000),
+      parallel_enabled_(false),
+      num_threads_(0),
       cache_valid_(false) {
     
     resetStats();
@@ -54,8 +60,13 @@ IndependentSetResult IndependentSetSolver::findMaximumIndependentSet(const Graph
                 break;
                 
             case IndependentSetAlgorithm::BRANCH_AND_BOUND:
-                algorithm_result = solveBranchAndBound(graph);
-                result.algorithm_used = "Enhanced Branch and Bound";
+                if (parallel_enabled_ && graph.getVertexCount() >= 50) {
+                    algorithm_result = solveBranchAndBoundParallel(graph);
+                    result.algorithm_used = "Parallel Branch and Bound (" + std::to_string(num_threads_) + " threads)";
+                } else {
+                    algorithm_result = solveBranchAndBound(graph);
+                    result.algorithm_used = "Enhanced Branch and Bound";
+                }
                 break;
                 
             case IndependentSetAlgorithm::APPROXIMATION:
@@ -403,6 +414,106 @@ IndependentSetResult IndependentSetSolver::solveBranchAndBound(const Graph& grap
     return result;
 }
 
+IndependentSetResult IndependentSetSolver::solveBranchAndBoundParallel(const Graph& graph) {
+    IndependentSetResult result;
+    
+    // Order vertices by degree for better branching
+    auto vertices = orderVerticesByDegree(graph);
+    
+    // Global best solution (shared across threads)
+    std::vector<size_t> best_set;
+    std::mutex best_mutex;
+    std::atomic<size_t> best_size{0};
+    std::atomic<size_t> nodes_explored{0};
+    std::atomic<bool> done{false};
+    
+    // Work-stealing scheduler
+    WorkStealingScheduler<BranchAndBoundNode> scheduler(num_threads_);
+    
+    // Create initial node
+    std::vector<size_t> initial_candidates = vertices;
+    BranchAndBoundNode root({}, initial_candidates, 0);
+    computeBounds(root, graph);
+    
+    // Worker function
+    auto worker = [&](BranchAndBoundNode node) -> std::vector<BranchAndBoundNode> {
+        nodes_explored++;
+        
+        // Prune if upper bound is worse than current best
+        if (node.upper_bound <= best_size.load(std::memory_order_relaxed)) {
+            return {};
+        }
+        
+        if (node.candidates.empty()) {
+            // Leaf node - check if we found a better solution
+            if (node.current_set.size() > best_size.load(std::memory_order_relaxed)) {
+                std::lock_guard<std::mutex> lock(best_mutex);
+                if (node.current_set.size() > best_set.size()) {
+                    best_set = node.current_set;
+                    best_size.store(best_set.size(), std::memory_order_release);
+                }
+            }
+            return {};
+        }
+        
+        // Select branching variable
+        auto branching_vars = selectBranchingVariable(node, graph);
+        std::vector<BranchAndBoundNode> new_tasks;
+        
+        for (size_t var : branching_vars) {
+            // Branch 1: Include the variable
+            std::vector<size_t> new_candidates;
+            for (size_t cand : node.candidates) {
+                if (cand != var && !graph.hasEdge(var, cand)) {
+                    new_candidates.push_back(cand);
+                }
+            }
+            
+            std::vector<size_t> new_set = node.current_set;
+            new_set.push_back(var);
+            
+            BranchAndBoundNode include_node(new_set, new_candidates, node.level + 1);
+            computeBounds(include_node, graph);
+            
+            if (include_node.upper_bound > best_size.load(std::memory_order_relaxed)) {
+                new_tasks.push_back(include_node);
+            }
+            
+            // Branch 2: Exclude the variable
+            std::vector<size_t> exclude_candidates;
+            for (size_t cand : node.candidates) {
+                if (cand != var) {
+                    exclude_candidates.push_back(cand);
+                }
+            }
+            
+            BranchAndBoundNode exclude_node(node.current_set, exclude_candidates, node.level + 1);
+            computeBounds(exclude_node, graph);
+            
+            if (exclude_node.upper_bound > best_size.load(std::memory_order_relaxed)) {
+                new_tasks.push_back(exclude_node);
+            }
+        }
+        
+        return new_tasks;
+    };
+    
+    // Start scheduler and submit initial task
+    scheduler.start(worker);
+    scheduler.submit(root);
+    
+    // Wait for completion
+    scheduler.wait_completion();
+    
+    result.independent_set = best_set;
+    result.set_size = best_set.size();
+    result.solution_quality = calculateSolutionQuality(graph, best_set);
+    result.is_optimal = (result.solution_quality > 0.95);
+    result.nodes_explored = nodes_explored.load();
+    
+    return result;
+}
+
 void IndependentSetSolver::computeBounds(BranchAndBoundNode& node, const Graph& graph) {
     // Lower bound: current set size
     node.lower_bound = static_cast<double>(node.current_set.size());
@@ -631,6 +742,20 @@ void IndependentSetSolver::resetStats() {
 void IndependentSetSolver::setParameters(std::chrono::milliseconds time_limit, size_t max_iterations) {
     time_limit_ = time_limit;
     max_iterations_ = max_iterations;
+}
+
+void IndependentSetSolver::enableParallelMode(size_t num_threads) {
+    parallel_enabled_ = true;
+    if (num_threads == 0) {
+        num_threads_ = std::thread::hardware_concurrency();
+        if (num_threads_ == 0) num_threads_ = 4;
+    } else {
+        num_threads_ = num_threads;
+    }
+}
+
+void IndependentSetSolver::disableParallelMode() {
+    parallel_enabled_ = false;
 }
 
 bool IndependentSetSolver::hasIndependentSetOfSize(const Graph& graph, size_t target_size) {

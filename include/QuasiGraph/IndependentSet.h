@@ -39,6 +39,8 @@ struct BranchAndBoundNode {
     double upper_bound;
     double lower_bound;
     
+    BranchAndBoundNode() : level(0), upper_bound(0.0), lower_bound(0.0) {}
+    
     BranchAndBoundNode(const std::vector<size_t>& set, const std::vector<size_t>& cand, size_t lvl)
         : current_set(set), candidates(cand), level(lvl), upper_bound(0.0), lower_bound(0.0) {}
 };
@@ -94,6 +96,17 @@ public:
                       size_t max_iterations = 1000000);
     
     /**
+     * Enable parallel mode with specified thread count
+     * @param num_threads Number of threads (0 = auto-detect)
+     */
+    void enableParallelMode(size_t num_threads = 0);
+    
+    /**
+     * Disable parallel mode
+     */
+    void disableParallelMode();
+    
+    /**
      * Get performance statistics
      */
     struct PerformanceStats {
@@ -116,11 +129,16 @@ private:
     std::chrono::milliseconds time_limit_;
     size_t max_iterations_;
     
+    // Parallel execution
+    bool parallel_enabled_;
+    size_t num_threads_;
+    
     mutable PerformanceStats stats_;
     
     // Core algorithm implementations
     IndependentSetResult solveQuasiPolynomial(const Graph& graph);
     IndependentSetResult solveBranchAndBound(const Graph& graph);
+    IndependentSetResult solveBranchAndBoundParallel(const Graph& graph);
     IndependentSetResult solveApproximation(const Graph& graph);
     IndependentSetResult solveHybrid(const Graph& graph);
     

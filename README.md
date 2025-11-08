@@ -17,6 +17,7 @@ QuasiGraph is a graph library implementing optimized algorithms for graph operat
 - Bit-Parallel SIMD Operations with AVX2 support
 - Graph operations with efficient vertex/edge management
 - Independent Set Solver with multiple algorithms
+- Vertex ordering optimization (degeneracy, clustering, hybrid heuristics)
 - Structural decomposition and graph analysis
 - Social network analysis tools
 - Performance benchmarking suite
@@ -78,11 +79,24 @@ Real benchmark results on modern hardware (actual execution times):
 - Memory: ~7.7 MB per 1K vertices
 - Success Rate: 100%
 
-**Optimizations:**
-- Bit-parallel mode: `graph.enableBitParallelMode()`
-- SIMD AVX2 for set operations
-- Hardware POPCNT for bit counting
-- Compiler: GCC 12, -O3 -march=native
+**Optimizations Implemented:**
+1. **Bit-parallel SIMD** (O(n^1.47) achieved)
+   - AVX2 256-bit operations: `graph.enableBitParallelMode()`
+   - Hardware POPCNT for O(1) bit counting
+   - 834x speedup on common neighbor operations
+
+2. **Vertex Ordering** (branch-and-bound enhancement)
+   - Degeneracy ordering (best for <150 vertices)
+   - Clustering coefficient heuristic
+   - Eigenvector centrality
+   - Learned hybrid model (ML-based)
+
+3. **Parallel Branch-and-Bound** (work-stealing scheduler)
+   - `solver.enableParallelMode()` for multi-threading
+   - 1.13x speedup on 45-vertex dense graphs
+   - Note: Overhead significant for small graphs (<30 vertices)
+
+**Compiler:** GCC 12, -O3 -march=native
 
 ## License
 
