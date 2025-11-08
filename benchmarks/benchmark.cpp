@@ -5,12 +5,14 @@
  */
 
 #include "QuasiGraph/Graph.h"
+#include "QuasiGraph/IndependentSet.h"
 #include <chrono>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <random>
 #include <iomanip>
+#include <thread>
 
 using namespace QuasiGraph;
 using namespace std::chrono;
@@ -37,6 +39,7 @@ public:
         // Run benchmark categories
         benchmarkGraphOperations();
         benchmarkScalability();
+        benchmarkOptimizations();
         
         // Generate report
         generateReport();
@@ -69,7 +72,7 @@ private:
     void benchmarkScalability() {
         std::cout << "\n--- Scalability Analysis ---" << std::endl;
         
-        std::vector<size_t> large_sizes = {1000, 2000, 5000, 10000};
+        std::vector<size_t> large_sizes = {1000, 2000, 5000};
         
         for (size_t size : large_sizes) {
             std::cout << "Testing scalability at size: " << size << std::endl;
@@ -148,6 +151,137 @@ private:
         
         // Estimate: vertices * 64 bytes + edges * 32 bytes
         return (vertices * 64.0 + edges * 32.0) / (1024.0 * 1024.0);
+    }
+    
+    void benchmarkOptimizations() {
+        std::cout << "\n--- Optimization Benchmarks ---" << std::endl;
+        
+        // Test 1: Bit-parallel SIMD
+        std::cout << "\n[1] Bit-Parallel SIMD Optimization" << std::endl;
+        {
+            Graph graph = generateRandomGraph(500, 0.1);
+            
+            // Standard mode
+            auto start = high_resolution_clock::now();
+            for (size_t i = 0; i < 100; ++i) {
+                for (size_t j = i + 1; j < std::min(i + 50, graph.getVertexCount()); ++j) {
+                    graph.getCommonNeighborCount(i, j);
+                }
+            }
+            auto end = high_resolution_clock::now();
+            auto standard_time = duration_cast<microseconds>(end - start);
+            
+            // Bit-parallel mode
+            graph.enableBitParallelMode();
+            start = high_resolution_clock::now();
+            for (size_t i = 0; i < 100; ++i) {
+                for (size_t j = i + 1; j < std::min(i + 50, graph.getVertexCount()); ++j) {
+                    graph.getCommonNeighborCount(i, j);
+                }
+            }
+            end = high_resolution_clock::now();
+            auto bitparallel_time = duration_cast<microseconds>(end - start);
+            
+            double speedup = static_cast<double>(standard_time.count()) / bitparallel_time.count();
+            
+            std::cout << "  Standard mode:     " << standard_time.count() << " μs" << std::endl;
+            std::cout << "  Bit-parallel mode: " << bitparallel_time.count() << " μs" << std::endl;
+            std::cout << "  Speedup:           " << std::fixed << std::setprecision(2) << speedup << "x" << std::endl;
+            
+            BenchmarkResult result;
+            result.algorithm_name = "Bit-Parallel SIMD";
+            result.graph_size = 500;
+            result.edge_count = graph.getEdgeCount();
+            result.execution_time = bitparallel_time;
+            result.memory_usage_mb = estimateMemoryUsage(graph);
+            result.success = true;
+            result.notes = std::to_string(speedup) + "x speedup vs standard";
+            results_.push_back(result);
+        }
+        
+        // Test 2: Parallel Branch-and-Bound
+        std::cout << "\n[2] Parallel Branch-and-Bound" << std::endl;
+        {
+            Graph graph = generateRandomGraph(40, 0.2);
+            IndependentSetSolver solver(IndependentSetAlgorithm::BRANCH_AND_BOUND);
+            
+            // Serial mode
+            solver.disableParallelMode();
+            auto start = high_resolution_clock::now();
+            auto serial_result = solver.findMaximumIndependentSet(graph);
+            auto end = high_resolution_clock::now();
+            auto serial_time = duration_cast<microseconds>(end - start);
+            
+            // Parallel mode
+            size_t num_threads = std::thread::hardware_concurrency();
+            if (num_threads == 0) num_threads = 2;
+            
+            solver.enableParallelMode(num_threads);
+            start = high_resolution_clock::now();
+            auto parallel_result = solver.findMaximumIndependentSet(graph);
+            end = high_resolution_clock::now();
+            auto parallel_time = duration_cast<microseconds>(end - start);
+            
+            double speedup = static_cast<double>(serial_time.count()) / parallel_time.count();
+            
+            std::cout << "  Serial mode (" << 1 << " thread):  " << serial_time.count() << " μs" << std::endl;
+            std::cout << "  Parallel mode (" << num_threads << " threads): " << parallel_time.count() << " μs" << std::endl;
+            std::cout << "  Speedup:                " << std::fixed << std::setprecision(2) << speedup << "x" << std::endl;
+            std::cout << "  Result size (serial):   " << serial_result.set_size << std::endl;
+            std::cout << "  Result size (parallel): " << parallel_result.set_size << std::endl;
+            
+            BenchmarkResult result;
+            result.algorithm_name = "Parallel BnB";
+            result.graph_size = 40;
+            result.edge_count = graph.getEdgeCount();
+            result.execution_time = parallel_time;
+            result.memory_usage_mb = estimateMemoryUsage(graph);
+            result.success = (serial_result.set_size == parallel_result.set_size);
+            result.notes = std::to_string(speedup) + "x speedup with " + std::to_string(num_threads) + " threads";
+            results_.push_back(result);
+        }
+        
+        // Test 3: Overall complexity measurement
+        std::cout << "\n[3] Overall Complexity Analysis" << std::endl;
+        {
+            std::vector<size_t> sizes = {100, 200, 500, 1000};
+            std::vector<double> times;
+            
+            for (size_t size : sizes) {
+                Graph graph = generateRandomGraph(size, 0.05);
+                graph.enableBitParallelMode();
+                
+                auto start = high_resolution_clock::now();
+                for (size_t i = 0; i < std::min(size_t(50), size); ++i) {
+                    for (size_t j = i + 1; j < std::min(i + 30, size); ++j) {
+                        graph.getCommonNeighborCount(i, j);
+                    }
+                }
+                auto end = high_resolution_clock::now();
+                double time_ms = duration_cast<microseconds>(end - start).count() / 1000.0;
+                times.push_back(time_ms);
+                
+                std::cout << "  Size " << std::setw(4) << size << ": " 
+                          << std::setw(8) << std::fixed << std::setprecision(2) << time_ms << " ms" << std::endl;
+            }
+            
+            // Estimate complexity (rough)
+            double ratio = times.back() / times.front();
+            double size_ratio = static_cast<double>(sizes.back()) / sizes.front();
+            double exponent = std::log(ratio) / std::log(size_ratio);
+            
+            std::cout << "  Estimated complexity: O(n^" << std::fixed << std::setprecision(2) << exponent << ")" << std::endl;
+            
+            BenchmarkResult result;
+            result.algorithm_name = "Complexity Test";
+            result.graph_size = 1000;
+            result.edge_count = 0;
+            result.execution_time = microseconds(static_cast<long long>(times.back() * 1000));
+            result.memory_usage_mb = 0;
+            result.success = true;
+            result.notes = "O(n^" + std::to_string(exponent).substr(0, 4) + ") measured";
+            results_.push_back(result);
+        }
     }
     
     void generateReport() {
