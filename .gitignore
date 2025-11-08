@@ -1,0 +1,91 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Compiled binaries
+quasigraph_*
+simple_test
+demo
+final_demo
+/benchmark
+/test
+/example
+
+# Build directories
+build/
+dist/
+cmake-build-*/
+out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+benchmark_report.txt
+
+# Test outputs
+test_results/
+coverage/
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Package files
+*.tar.gz
+*.zip
+*.7z
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+# Keep our Makefile
+*.cmake
+
+# Compiler files
+*.d
+*.su
+*.idb
+*.pdb
+*.ilk
+
+# Performance profiling
+*.prof
+*.profile
+gmon.out
+
+# Memory debugging
+valgrind_*
+
+# Coverage reports
+*.gcov
+*.gcda
+*.gcno
+coverage.info
+lcov/
+
+# Local configuration
+local_config.h
+config.local.*
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Generated files
+generated/
+auto/
