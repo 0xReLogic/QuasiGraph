@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        compiler: [g++-12, g++-13]
+        compiler: [g++-11, g++-12]
         build_type: [Debug, Release]
     
     steps:
@@ -21,8 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake
-        sudo apt-get install -y ${{ matrix.compiler }} || true
+        sudo apt-get install -y build-essential cmake ${{ matrix.compiler }}
     
     - name: Configure CMake
       run: |
@@ -71,12 +70,12 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential g++-13
+        sudo apt-get install -y build-essential g++-12
     
     - name: Performance Benchmark
       run: |
-        export CXX=g++-13
-        g++-13 -std=c++20 -O3 -march=native -Iinclude -o benchmark benchmarks/benchmark.cpp src/Graph.cpp
+        export CXX=g++-12
+        g++-12 -std=c++20 -O3 -march=native -Iinclude -o benchmark benchmarks/benchmark.cpp src/Graph.cpp
         ./benchmark
     
     - name: Upload benchmark results
