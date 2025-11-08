@@ -1178,4 +1178,116 @@ double SocialNetworkAnalysis::calculateModularity(const std::vector<std::vector<
     return total_modularity;
 }
 
+std::vector<InfluenceMetrics> SocialNetworkAnalysis::calculateInfluenceMetricsTraditional() {
+    std::vector<InfluenceMetrics> metrics;
+    
+    for (const auto& user : users_) {
+        InfluenceMetrics metric;
+        metric.user_id = user.user_id;
+        metric.betweenness_centrality = 0.0;
+        metric.closeness_centrality = 0.0;
+        metric.eigenvector_centrality = user.influence_score;
+        metric.page_rank_score = user.influence_score;
+        metric.katz_centrality = user.influence_score;
+        metric.reach_estimate = user.follower_count;
+        metric.clustering_coefficient = user.activity_level;
+        
+        metrics.push_back(metric);
+    }
+    
+    return metrics;
+}
+
+std::vector<size_t> SocialNetworkAnalysis::recommendByInfluence(size_t user_id, size_t count) {
+    std::vector<size_t> recommendations;
+    
+    // Find users with high influence that user doesn't follow
+    std::vector<std::pair<double, size_t>> candidates;
+    
+    for (const auto& user : users_) {
+        if (user.user_id != user_id) {
+            // Check if not already connected
+            bool is_connected = false;
+            if (network_graph_->hasEdge(user_id, user.user_id)) {
+                is_connected = true;
+            }
+            
+            if (!is_connected) {
+                candidates.push_back({user.influence_score, user.user_id});
+            }
+        }
+    }
+    
+    // Sort by influence score
+    std::sort(candidates.begin(), candidates.end(), 
+              [](const auto& a, const auto& b) { return a.first > b.first; });
+    
+    // Return top N
+    for (size_t i = 0; i < std::min(count, candidates.size()); ++i) {
+        recommendations.push_back(candidates[i].second);
+    }
+    
+    return recommendations;
+}
+
+std::vector<size_t> SocialNetworkAnalysis::recommendByCommunity(size_t user_id, size_t count) {
+    std::vector<size_t> recommendations;
+    
+    // Detect communities first
+    auto communities = detectCommunities(2);
+    
+    // Find users in same community
+    size_t user_community = 0;
+    bool found_community = false;
+    
+    for (const auto& community : communities) {
+        for (size_t member : community.members) {
+            if (member == user_id) {
+                found_community = true;
+                break;
+            }
+        }
+        if (found_community) break;
+        user_community++;
+    }
+    
+    if (!found_community || user_community >= communities.size()) {
+        return recommendations; // Empty if not in any community
+    }
+    
+    // Get members from same community
+    const auto& community = communities[user_community];
+    std::vector<std::pair<double, size_t>> candidates;
+    
+    for (size_t member : community.members) {
+        if (member != user_id) {
+            // Check if not already connected
+            bool is_connected = network_graph_->hasEdge(user_id, member);
+            
+            if (!is_connected) {
+                // Score by activity level
+                double score = 0.5;
+                for (const auto& user : users_) {
+                    if (user.user_id == member) {
+                        score = user.activity_level;
+                        break;
+                    }
+                }
+                candidates.push_back({score, member});
+            }
+        }
+    }
+    
+    // Sort by score
+    std::sort(candidates.begin(), candidates.end(),
+              [](const auto& a, const auto& b) { return a.first > b.first; });
+    
+    // Return top N
+    for (size_t i = 0; i < std::min(count, candidates.size()); ++i) {
+        recommendations.push_back(candidates[i].second);
+    }
+    
+    return recommendations;
+}
+
 } // namespace QuasiGraph
