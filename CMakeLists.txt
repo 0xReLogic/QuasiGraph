@@ -25,6 +25,7 @@ set(SOURCES
     src/IndependentSet.cpp
     src/StructuralDecomposition.cpp
     src/SocialNetworkAnalysis.cpp
+    src/VertexOrdering.cpp
 )
 
 # Header files
@@ -35,6 +36,9 @@ set(HEADERS
     include/QuasiGraph/StructuralDecomposition.h
     include/QuasiGraph/SocialNetworkAnalysis.h
     include/QuasiGraph/QuasiGraph.h
+    include/QuasiGraph/VertexOrdering.h
+    include/QuasiGraph/BitSet.h
+    include/QuasiGraph/ParallelBnB.h
 )
 
 # Create library
