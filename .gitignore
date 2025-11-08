@@ -93,4 +93,4 @@ config.local.*
 generated/
 auto/
 benchmarks/parallel_bench
-test/basic_tests
+tests/basic_tests
