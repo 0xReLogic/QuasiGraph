@@ -4,7 +4,7 @@
 [![Release](https://github.com/0xReLogic/QuasiGraph/workflows/Release/badge.svg)](https://github.com/0xReLogic/QuasiGraph/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
-[![Performance](https://img.shields.io/badge/Complexity-O(n%5E1.47)-green.svg)](https://github.com/0xReLogic/QuasiGraph#performance)
+[![Performance](https://img.shields.io/badge/Empirical-O(n%5E1.25)-green.svg)](https://github.com/0xReLogic/QuasiGraph#performance)
 
 High-performance C++20 graph optimization library with SIMD-accelerated operations.
 
@@ -22,12 +22,12 @@ Finding the largest set of vertices where no two vertices are connected. Critica
 
 ## Use Cases
 
-- ✅ **Wireless Networks**: Optimize base station placement (max coverage, no interference)
-- ✅ **Job Scheduling**: Schedule maximum non-conflicting tasks
-- ✅ **Map Coloring**: Graph coloring problems (chromatic number)
-- ✅ **Bioinformatics**: Find maximum cliques in protein networks
-- ✅ **Social Networks**: Detect communities, influencer analysis
-- ✅ **Compiler Design**: Register allocation, code optimization
+-  **Wireless Networks**: Optimize base station placement (max coverage, no interference)
+-  **Job Scheduling**: Schedule maximum non-conflicting tasks
+-  **Map Coloring**: Graph coloring problems (chromatic number)
+-  **Bioinformatics**: Find maximum cliques in protein networks
+-  **Social Networks**: Detect communities, influencer analysis
+-  **Compiler Design**: Register allocation, code optimization
 
 ## Features
 
@@ -100,13 +100,16 @@ Real benchmark results on modern hardware (actual execution times):
 | 10,000   | 2.50M   | 2,907     | 76.95       | Success |
 
 **Performance Characteristics:**
-- Time Complexity: O(n^1.47) measured
-- Size Scaling: 100x (100 → 10,000 vertices)
+- **Empirical Complexity: O(n^1.25)** - measured average from benchmark data (1K→10K range)
+  - 1K→2K vertices: 2.7x time (expected 2.4x for O(n^1.25))
+  - 2K→5K vertices: 3.3x time (expected 2.9x for O(n^1.25))
+  - 5K→10K vertices: 2.0x time (expected 2.4x for O(n^1.25))
+  - Variation due to graph structure, cache effects, and practical overhead
 - Memory: ~7.7 MB per 1K vertices
-- Success Rate: 100%
+- Success Rate: 100% (all tests passed)
 
 **Optimizations Implemented:**
-1. **Bit-parallel SIMD** (O(n^1.47) measured on 500-vertex graphs)
+1. **Bit-parallel SIMD** (158x speedup on neighbor operations)
    - AVX2 256-bit operations: `graph.enableBitParallelMode()`
    - Hardware POPCNT for O(1) bit counting
    - 158x speedup on neighbor set operations (benchmark: 12ms -> 79us)
@@ -156,13 +159,13 @@ std::cout << "Can activate " << active_stations.size()
 
 ## When to Use QuasiGraph
 
-**✅ Use QuasiGraph when:**
+** Use QuasiGraph when:**
 - Graph has 10-10,000 vertices (sweet spot)
 - Need maximum independent set (optimal solution)
 - Performance critical (embedded systems, real-time)
 - Have AVX2-capable CPU
 
-**❌ Don't use when:**
+** Don't use when:**
 - Graph > 100,000 vertices (use approximation algorithms)
 - Only need approximate solution (use greedy)
 - CPU doesn't support AVX2
