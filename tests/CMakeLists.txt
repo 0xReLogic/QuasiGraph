@@ -1,28 +1,8 @@
 # Test configuration for QuasiGraph
 
-# Find required packages
-find_package(GTest QUIET)
+# Simple test runner without GTest (always build this)
+add_executable(quasigraph_tests basic_tests.cpp)
+target_link_libraries(quasigraph_tests QuasiGraph)
 
-if(GTest_FOUND)
-    # Test executable
-    add_executable(quasigraph_tests
-        basic_tests.cpp
-    )
-    
-    target_link_libraries(quasigraph_tests
-        QuasiGraph
-        GTest::gtest_main
-    )
-    
-    # Register tests
-    include(GoogleTest)
-    gtest_discover_tests(quasigraph_tests)
-    
-    message(STATUS "Google Test found - building tests")
-else()
-    message(STATUS "Google Test not found - skipping tests")
-endif()
-
-# Simple test runner without GTest
-add_executable(basic_tests basic_tests.cpp)
-target_link_libraries(basic_tests QuasiGraph)
+# Add as CTest
+add_test(NAME BasicTests COMMAND quasigraph_tests)
