@@ -72,7 +72,7 @@ private:
     void benchmarkScalability() {
         std::cout << "\n--- Scalability Analysis ---" << std::endl;
         
-        std::vector<size_t> large_sizes = {1000, 2000, 5000};
+        std::vector<size_t> large_sizes = {1000, 2000, 5000, 10000};
         
         for (size_t size : large_sizes) {
             std::cout << "Testing scalability at size: " << size << std::endl;
