@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
+#include <string>
 #include "BitSet.h"
 
 namespace QuasiGraph {
@@ -117,6 +118,28 @@ public:
      * Check if using bit-parallel mode
      */
     bool isBitParallelMode() const { return use_bitset_; }
+    
+    /**
+     * Find maximum independent set using optimized algorithms
+     * @param use_parallel Enable parallel branch-and-bound (default: false)
+     * @param num_threads Number of threads (0 = auto-detect)
+     * @return Vertices in maximum independent set
+     */
+    std::vector<size_t> findMaximumIndependentSet(bool use_parallel = false, size_t num_threads = 0) const;
+    
+    /**
+     * Get vertex ordering for better algorithm performance
+     * @param strategy Ordering strategy (degree, degeneracy, clustering, etc.)
+     * @return Ordered vertex list
+     */
+    std::vector<size_t> getVertexOrdering(const std::string& strategy = "degeneracy") const;
+    
+    /**
+     * Compute clustering coefficient for a vertex
+     * @param vertex_id Vertex to compute for
+     * @return Clustering coefficient (0.0 to 1.0)
+     */
+    double getClusteringCoefficient(size_t vertex_id) const;
 
 private:
     bool directed_;

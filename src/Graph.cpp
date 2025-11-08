@@ -5,6 +5,8 @@
  */
 
 #include "QuasiGraph/Graph.h"
+#include "QuasiGraph/IndependentSet.h"
+#include "QuasiGraph/VertexOrdering.h"
 #include <stdexcept>
 #include <algorithm>
 
@@ -195,6 +197,58 @@ size_t Graph::getCommonNeighborCount(size_t v1, size_t v2) const {
     
     // Hardware POPCNT + SIMD intersection
     return bitset_adjacency_[idx1].intersect_count(bitset_adjacency_[idx2]);
+}
+
+std::vector<size_t> Graph::findMaximumIndependentSet(bool use_parallel, size_t num_threads) const {
+    IndependentSetSolver solver(IndependentSetAlgorithm::BRANCH_AND_BOUND);
+    
+    if (use_parallel) {
+        solver.enableParallelMode(num_threads);
+    }
+    
+    auto result = solver.findMaximumIndependentSet(*this);
+    return result.independent_set;
+}
+
+std::vector<size_t> Graph::getVertexOrdering(const std::string& strategy) const {
+    QuasiGraph::OrderingStrategy strat;
+    if (strategy == "degree") {
+        strat = QuasiGraph::OrderingStrategy::DEGREE;
+    } else if (strategy == "degeneracy") {
+        strat = QuasiGraph::OrderingStrategy::DEGENERACY;
+    } else if (strategy == "clustering") {
+        strat = QuasiGraph::OrderingStrategy::CLUSTERING;
+    } else if (strategy == "eigenvector") {
+        strat = QuasiGraph::OrderingStrategy::EIGENVECTOR;
+    } else if (strategy == "learned") {
+        strat = QuasiGraph::OrderingStrategy::LEARNED_HYBRID;
+    } else {
+        strat = QuasiGraph::OrderingStrategy::DEGENERACY; // default
+    }
+    
+    QuasiGraph::VertexOrderingOptimizer optimizer;
+    return optimizer.computeOrdering(*this, strat);
+}
+
+double Graph::getClusteringCoefficient(size_t vertex_id) const {
+    auto neighbors = getNeighbors(vertex_id);
+    size_t degree = neighbors.size();
+    
+    if (degree < 2) return 0.0;
+    
+    // Count triangles (edges between neighbors)
+    size_t triangles = 0;
+    for (size_t i = 0; i < neighbors.size(); ++i) {
+        for (size_t j = i + 1; j < neighbors.size(); ++j) {
+            if (hasEdge(neighbors[i], neighbors[j])) {
+                triangles++;
+            }
+        }
+    }
+    
+    // Clustering coefficient = (2 * triangles) / (degree * (degree - 1))
+    size_t max_triangles = degree * (degree - 1) / 2;
+    return max_triangles > 0 ? static_cast<double>(triangles) / max_triangles : 0.0;
 }
 
 } // namespace QuasiGraph
