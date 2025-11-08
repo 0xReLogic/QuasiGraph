@@ -10,6 +10,7 @@
  * QuasiGraph complexity: O(n^(log n)) - Quasi-polynomial breakthrough
  */
 
+#include "QuasiGraph/QuasiPolynomial.h"
 #include <vector>
 #include <unordered_set>
 #include <chrono>
@@ -28,6 +29,7 @@ struct IndependentSetResult {
     size_t nodes_explored;                // Number of graph nodes explored
     double approximation_ratio;           // Approximation ratio if not optimal
     std::string algorithm_used;           // Name of algorithm used
+    bool success;
 };
 
 struct BranchAndBoundNode {
@@ -124,6 +126,7 @@ private:
     
     // Quasi-polynomial algorithm components
     IndependentSetResult applyQuasiDecomposition(const Graph& graph);
+    IndependentSetResult solveQuasiPolynomialLarge(const Graph& graph);
     std::vector<GraphComponent> decomposeForIndependentSet(const Graph& graph);
     IndependentSetResult solveComponent(const GraphComponent& component, const Graph& original_graph);
     
@@ -143,6 +146,8 @@ private:
     std::vector<size_t> getComplement(const std::vector<size_t>& set, size_t graph_size);
     double calculateSolutionQuality(const Graph& graph, const std::vector<size_t>& set);
     double calculateApproximationRatio(const Graph& graph, const std::vector<size_t>& set);
+    GraphComponent extractIndependentSetComponent(const Graph& graph, size_t start_vertex, std::vector<bool>& processed, size_t max_size);
+    bool maintainsQuasiProperties(const std::vector<size_t>& vertices, size_t density_threshold, const Graph& graph);
     
     // Missing function declarations
     IndependentSetResult solveExactSmallGraph(const Graph& graph);

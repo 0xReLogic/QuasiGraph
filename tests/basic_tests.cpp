@@ -82,15 +82,15 @@ int main() {
         std::cout << "\nResults: " << passed << "/" << total << " tests passed" << std::endl;
         
         if (passed == total) {
-            std::cout << "✅ All tests passed!" << std::endl;
+            std::cout << "All tests passed!" << std::endl;
             return 0;
         } else {
-            std::cout << "❌ Some tests failed!" << std::endl;
+            std::cout << "Some tests failed!" << std::endl;
             return 1;
         }
         
     } catch (const std::exception& e) {
-        std::cerr << "❌ Test failed with exception: " << e.what() << std::endl;
+        std::cerr << "Test failed with exception: " << e.what() << std::endl;
         return 1;
     }
 }

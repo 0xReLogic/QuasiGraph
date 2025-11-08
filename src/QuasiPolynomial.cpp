@@ -11,6 +11,7 @@
 #include <cmath>
 #include <chrono>
 #include <iostream>
+#include <queue>
 
 namespace QuasiGraph {
 
@@ -199,7 +200,7 @@ OptimizationResult QuasiPolynomial::applyQuasiPolynomialOptimization(
 }
 
 OptimizationResult QuasiPolynomial::fastOptimization(
-    const Graph& graph, const DecompositionResult& decomposition) {
+    const Graph& graph, const DecompositionResult& /* decomposition */) {
     
     OptimizationResult result;
     result.success = true;
@@ -219,7 +220,7 @@ OptimizationResult QuasiPolynomial::fastOptimization(
 }
 
 OptimizationResult QuasiPolynomial::balancedOptimization(
-    const Graph& graph, const DecompositionResult& decomposition) {
+    const Graph& graph, const DecompositionResult& /* decomposition */) {
     
     OptimizationResult result;
     result.success = true;
@@ -237,7 +238,7 @@ OptimizationResult QuasiPolynomial::balancedOptimization(
 }
 
 OptimizationResult QuasiPolynomial::optimalOptimization(
-    const Graph& graph, const DecompositionResult& decomposition) {
+    const Graph& graph, const DecompositionResult& /* decomposition */) {
     
     OptimizationResult result;
     result.success = true;
@@ -260,19 +261,19 @@ OptimizationResult QuasiPolynomial::optimalOptimization(
     return result;
 }
 
-double QuasiPolynomial::fastQuasiUpdate(const Graph& graph, size_t iteration) {
+double QuasiPolynomial::fastQuasiUpdate(const Graph& /* graph */, size_t iteration) {
     // Fast quasi-polynomial update implementation
     // Simplified mathematical operations for speed
     return std::pow(iteration + 1, quasi_exponent_) * 0.1;
 }
 
-double QuasiPolynomial::balancedQuasiUpdate(const Graph& graph, size_t iteration) {
+double QuasiPolynomial::balancedQuasiUpdate(const Graph& /* graph */, size_t iteration) {
     // Balanced quasi-polynomial update implementation
     // Trade-off between speed and accuracy
     return std::pow(iteration + 1, quasi_exponent_) * 0.15;
 }
 
-double QuasiPolynomial::optimalQuasiUpdate(const Graph& graph, size_t iteration) {
+double QuasiPolynomial::optimalQuasiUpdate(const Graph& /* graph */, size_t iteration) {
     // Optimal quasi-polynomial update implementation
     // Full mathematical precision
     return std::pow(iteration + 1, quasi_exponent_) * 0.2;
@@ -303,13 +304,13 @@ void QuasiPolynomial::validateResult(const Graph& graph, OptimizationResult& res
     }
 }
 
-bool QuasiPolynomial::checkFeasibility(const Graph& graph, const OptimizationResult& result) {
+bool QuasiPolynomial::checkFeasibility(const Graph& /* graph */, const OptimizationResult& result) {
     // Implementation of feasibility checking
     // Based on graph constraints and optimization objectives
     return result.objective_value >= 0.0;
 }
 
-double QuasiPolynomial::calculateOptimalityGap(const Graph& graph, const OptimizationResult& result) {
+double QuasiPolynomial::calculateOptimalityGap(const Graph& /* graph */, const OptimizationResult& result) {
     // Calculate gap between current solution and theoretical optimum
     // Using quasi-polynomial bounds from research
     return (1.0 - approximation_factor_) * result.objective_value;

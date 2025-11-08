@@ -56,14 +56,9 @@ DecompositionResult StructuralDecomposition::decompose(const Graph& graph, Decom
         
         // Apply chosen decomposition algorithm
         switch (chosen_type) {
-            case DecompositionType::TREE_DECOMPOSITION:
+            case DecompositionType::DIRECT:
                 result = treeDecomposition(graph);
-                result.type = DecompositionType::TREE_DECOMPOSITION;
-                break;
-                
-            case DecompositionType::MODULAR_DECOMPOSITION:
-                result = modularDecomposition(graph);
-                result.type = DecompositionType::MODULAR_DECOMPOSITION;
+                result.type = DecompositionType::DIRECT;
                 break;
                 
             case DecompositionType::QUASI_POLYNOMIAL:
@@ -71,19 +66,9 @@ DecompositionResult StructuralDecomposition::decompose(const Graph& graph, Decom
                 result.type = DecompositionType::QUASI_POLYNOMIAL;
                 break;
                 
-            case DecompositionType::BALANCED_SEPARATOR:
-                result = balancedSeparatorDecomposition(graph);
-                result.type = DecompositionType::BALANCED_SEPARATOR;
-                break;
-                
-            case DecompositionType::DEGREE_BASED:
-                result = degreeBasedDecomposition(graph);
-                result.type = DecompositionType::DEGREE_BASED;
-                break;
-                
-            case DecompositionType::HYBRID:
-                result = hybridDecomposition(graph);
-                result.type = DecompositionType::HYBRID;
+            default:
+                result = quasiPolynomialDecomposition(graph);
+                result.type = DecompositionType::QUASI_POLYNOMIAL;
                 break;
         }
         
@@ -453,17 +438,17 @@ DecompositionResult StructuralDecomposition::modularDecomposition(const Graph& g
     
     // Convert modules to components
     for (const auto& module : modules) {
-        if (!module.empty()) {
+        if (!module.vertices.empty()) {
             GraphComponent component;
-            component.vertices = module;
+            component.vertices = module.vertices;
             component.decomposition_method = "Modular Decomposition";
             component.is_quasi_solvable = true; // Modules have nice properties
             
             // Extract internal edges
-            for (size_t i = 0; i < module.size(); ++i) {
-                for (size_t j = i + 1; j < module.size(); ++j) {
-                    if (graph.hasEdge(module[i], module[j])) {
-                        component.internal_edges.emplace_back(module[i], module[j]);
+            for (size_t i = 0; i < module.vertices.size(); ++i) {
+                for (size_t j = i + 1; j < module.vertices.size(); ++j) {
+                    if (graph.hasEdge(module.vertices[i], module.vertices[j])) {
+                        component.internal_edges.emplace_back(module.vertices[i], module.vertices[j]);
                     }
                 }
             }
@@ -478,23 +463,24 @@ DecompositionResult StructuralDecomposition::modularDecomposition(const Graph& g
     return result;
 }
 
-std::vector<std::vector<size_t>> StructuralDecomposition::findModules(const Graph& graph) {
+std::vector<GraphComponent> StructuralDecomposition::findModules(const Graph& graph) {
     // Simplified module detection
     // A module is a set of vertices with identical neighborhoods outside the set
     
-    std::vector<std::vector<size_t>> modules;
+    std::vector<GraphComponent> modules;
     size_t vertex_count = graph.getVertexCount();
     std::vector<bool> assigned(vertex_count, false);
     
     for (size_t i = 0; i < vertex_count; ++i) {
         if (!assigned[i]) {
-            std::vector<size_t> module = {i};
+            GraphComponent module;
+            module.vertices = {i};
             assigned[i] = true;
             
             // Find vertices with identical external neighborhoods
             for (size_t j = i + 1; j < vertex_count; ++j) {
                 if (!assigned[j] && haveIdenticalExternalNeighborhoods(i, j, graph)) {
-                    module.push_back(j);
+                    module.vertices.push_back(j);
                     assigned[j] = true;
                 }
             }
@@ -565,7 +551,7 @@ DecompositionResult StructuralDecomposition::balancedSeparatorDecomposition(cons
     return result;
 }
 
-SeparatorInfo StructuralDecomposition::findBalancedSeparator(const Graph& graph, size_t max_separator_size) {
+SeparatorInfo StructuralDecomposition::findBalancedSeparator(const Graph& graph, size_t /* max_separator_size */) {
     // Try multiple separator finding strategies
     
     // Strategy 1: Minimum separator
@@ -590,7 +576,7 @@ SeparatorInfo StructuralDecomposition::findBalancedSeparator(const Graph& graph,
     return SeparatorInfo{};
 }
 
-SeparatorInfo StructuralDecomposition::findMinimumSeparator(const Graph& graph) {
+SeparatorInfo StructuralDecomposition::findMinimumSeparator(const Graph& /* graph */) {
     // Simplified minimum separator finding
     // In practice, this would use more sophisticated algorithms
     
@@ -602,14 +588,14 @@ SeparatorInfo StructuralDecomposition::findMinimumSeparator(const Graph& graph) 
     return separator;
 }
 
-SeparatorInfo StructuralDecomposition::findFlowBasedSeparator(const Graph& graph) {
+SeparatorInfo StructuralDecomposition::findFlowBasedSeparator(const Graph& /* graph */) {
     // Placeholder for flow-based separator
     // Would implement max-flow min-cut based separation
     
     return SeparatorInfo{};
 }
 
-SeparatorInfo StructuralDecomposition::findSpectralSeparator(const Graph& graph) {
+SeparatorInfo StructuralDecomposition::findSpectralSeparator(const Graph& /* graph */) {
     // Placeholder for spectral separator
     // Would use spectral graph theory for separation
     
@@ -624,7 +610,6 @@ bool StructuralDecomposition::isBalancedSeparator(const SeparatorInfo& separator
     // Check if separator creates reasonably balanced components
     size_t left_size = separator.left_component.size();
     size_t right_size = separator.right_component.size();
-    size_t total_size = left_size + right_size + separator.separator_vertices.size();
     
     double balance = std::min(left_size, right_size) / 
                     static_cast<double>(std::max(left_size, right_size));
@@ -717,7 +702,7 @@ DecompositionResult StructuralDecomposition::hybridDecomposition(const Graph& gr
         }
     }
     
-    best_result.type = DecompositionType::HYBRID;
+    best_result.type = DecompositionType::QUASI_POLYNOMIAL;
     
     return best_result;
 }
@@ -727,16 +712,10 @@ DecompositionType StructuralDecomposition::getOptimalDecompositionType(const Gra
     double edge_density = graph.getDensity();
     
     // Decision logic based on graph characteristics
-    if (vertex_count <= 50) {
-        return DecompositionType::TREE_DECOMPOSITION;
-    } else if (edge_density < 0.1) {
-        return DecompositionType::QUASI_POLYNOMIAL;
-    } else if (edge_density > 0.8) {
-        return DecompositionType::MODULAR_DECOMPOSITION;
-    } else if (vertex_count > 1000) {
-        return DecompositionType::DEGREE_BASED;
+    if (vertex_count <= 50 || edge_density > 0.8) {
+        return DecompositionType::DIRECT;
     } else {
-        return DecompositionType::HYBRID;
+        return DecompositionType::QUASI_POLYNOMIAL;
     }
 }
 
@@ -757,7 +736,7 @@ double StructuralDecomposition::calculateDecompositionQuality(
     return total_vertices > 0 ? total_quality / total_vertices : 0.0;
 }
 
-double StructuralDecomposition::assessComponentQuality(const GraphComponent& component, const Graph& graph) {
+double StructuralDecomposition::assessComponentQuality(const GraphComponent& component, const Graph& /* graph */) {
     double quality = 0.0;
     
     // Factor 1: Size appropriateness
@@ -804,7 +783,7 @@ size_t StructuralDecomposition::estimateTreeWidth(const GraphComponent& componen
     return max_degree;
 }
 
-double StructuralDecomposition::calculateDensity(const GraphComponent& component, const Graph& graph) {
+double StructuralDecomposition::calculateDensity(const GraphComponent& component, const Graph& /* graph */) {
     if (component.vertices.size() < 2) return 0.0;
     
     size_t possible_edges = component.vertices.size() * (component.vertices.size() - 1) / 2;
@@ -869,17 +848,11 @@ bool StructuralDecomposition::checkOptimalityPreservation(const DecompositionRes
     // This depends on the decomposition type
     
     switch (result.type) {
-        case DecompositionType::TREE_DECOMPOSITION:
-        case DecompositionType::MODULAR_DECOMPOSITION:
-        case DecompositionType::QUASI_POLYNOMIAL:
+        case DecompositionType::DIRECT:
             return true;
             
-        case DecompositionType::BALANCED_SEPARATOR:
+        case DecompositionType::QUASI_POLYNOMIAL:
             return result.preserves_optimality;
-            
-        case DecompositionType::DEGREE_BASED:
-        case DecompositionType::HYBRID:
-            return false; // May not preserve optimality
             
         default:
             return false;
@@ -948,7 +921,7 @@ TreewidthInfo StructuralDecomposition::computeTreewidth(const Graph& graph) {
 
 std::vector<size_t> StructuralDecomposition::reconstructSolution(
     const std::vector<std::vector<size_t>>& component_solutions,
-    const DecompositionResult& original_decomposition) {
+    const DecompositionResult& /* original_decomposition */) {
     
     std::vector<size_t> global_solution;
     

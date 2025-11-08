@@ -326,7 +326,6 @@ IndependentSetResult IndependentSetSolver::solveExactSmallGraph(const Graph& gra
 IndependentSetResult IndependentSetSolver::solveBranchAndBound(const Graph& graph) {
     IndependentSetResult result;
     
-    size_t vertex_count = graph.getVertexCount();
     std::vector<size_t> best_set;
     
     // Order vertices by degree for better branching
@@ -434,7 +433,7 @@ void IndependentSetSolver::computeBounds(BranchAndBoundNode& node, const Graph& 
 }
 
 std::vector<size_t> IndependentSetSolver::selectBranchingVariable(
-    const BranchAndBoundNode& node, const Graph& graph) {
+    const BranchAndBoundNode& node, const Graph& /* graph */) {
     
     // Select the most promising branching variable
     // Use degree and bound information
@@ -707,7 +706,7 @@ void IndependentSetSolver::bronKerbosch(
 size_t IndependentSetSolver::choosePivot(
     const std::vector<size_t>& candidates,
     const std::vector<size_t>& excluded,
-    const Graph& graph) {
+    const Graph& /* graph */) {
     
     // Simple pivot selection: choose vertex with maximum degree
     size_t best_vertex = candidates.empty() ? 0 : candidates[0];

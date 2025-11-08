@@ -104,9 +104,10 @@ std::vector<CommunityInfo> SocialNetworkAnalysis::detectCommunities(size_t min_c
     
     // Update statistics
     stats_.total_time += duration;
+    stats_.total_analyses++;
     stats_.average_community_count = 
         (stats_.average_community_count * (stats_.total_analyses - 1) + communities.size()) / 
-        stats_.total_analyses++;
+        stats_.total_analyses;
     
     return communities;
 }

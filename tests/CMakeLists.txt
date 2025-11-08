@@ -6,11 +6,7 @@ find_package(GTest QUIET)
 if(GTest_FOUND)
     # Test executable
     add_executable(quasigraph_tests
-        test_graph.cpp
-        test_independent_set.cpp
-        test_decomposition.cpp
-        test_social_network.cpp
-        test_performance.cpp
+        basic_tests.cpp
     )
     
     target_link_libraries(quasigraph_tests

@@ -21,6 +21,7 @@
 namespace QuasiGraph {
 
 struct Graph; // Forward declaration
+struct GraphComponent; // Forward declaration
 
 struct UserProfile {
     size_t user_id;
@@ -60,6 +61,7 @@ struct InfluenceMetrics {
 
 struct ViralityPrediction {
     size_t content_id;
+    size_t content_creator;
     double viral_potential_score;
     size_t estimated_reach;
     std::chrono::milliseconds time_to_peak;
@@ -241,11 +243,30 @@ private:
     double calculateModularity(const std::vector<std::vector<size_t>>& communities);
     std::vector<std::vector<size_t>> optimizeCommunities(
         const std::vector<std::vector<size_t>>& initial_communities);
+    double calculateCommunityInfluence(const CommunityInfo& community);
+    std::vector<std::string> getDominantInterests(const CommunityInfo& community);
     
     // Virality prediction components
     double calculateViralPotential(size_t content_creator, const std::string& content_type);
     std::vector<size_t> identifyKeyInfluencers(size_t content_creator, size_t count = 5);
     size_t estimateReach(size_t source_user, double spread_probability);
+    std::chrono::milliseconds predictTimeToPeak(size_t content_creator, const std::string& content_type);
+    double estimateEngagementRate(size_t content_creator, const std::string& content_type, double base_engagement);
+    double getContentViralityModifier(const std::string& content_type);
+    double calculateNetworkViralityModifier();
+    double calculateActivityViralityModifier(size_t user_id);
+    std::vector<size_t> calculateInfluenceSphere(size_t user_id);
+    double predictInitialEngagement(size_t content_creator, const std::string& content_type);
+    double calculateLocalClusteringCoefficient(size_t user_id);
+    std::vector<size_t> calculateShortestPaths(size_t source_user);
+    size_t generateContentId();
+    bool isOnShortestPath(size_t source, size_t target, size_t intermediate);
+    double calculateCommunityCohesion(const CommunityInfo& community);
+    size_t countInternalConnections(const CommunityInfo& community);
+    size_t countExternalConnections(const CommunityInfo& community);
+    double calculateComponentCohesion(const GraphComponent& component);
+    std::vector<CommunityInfo> optimizeCommunityStructure(const std::vector<CommunityInfo>& communities);
+    bool shouldMergeCommunities(const CommunityInfo& c1, const CommunityInfo& c2);
     
     // Recommendation system
     std::vector<size_t> recommendBySimilarity(size_t user_id, size_t count);

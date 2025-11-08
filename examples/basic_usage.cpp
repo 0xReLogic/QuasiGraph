@@ -46,6 +46,6 @@ int main() {
         std::cout << std::endl;
     }
     
-    std::cout << "\n✅ Basic usage example completed!" << std::endl;
+    std::cout << "\nBasic usage example completed!" << std::endl;
     return 0;
 }

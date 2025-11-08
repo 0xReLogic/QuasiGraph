@@ -10,47 +10,17 @@
  * into quasi-polynomial time solvable instances through structural analysis.
  */
 
+#include "QuasiGraph/QuasiPolynomial.h"
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <chrono>
 #include <queue>
 
 namespace QuasiGraph {
 
 struct Graph; // Forward declaration
-
-enum class DecompositionType {
-    TREE_DECOMPOSITION,      // Tree-width based decomposition
-    MODULAR_DECOMPOSITION,   // Module-based decomposition
-    QUASI_POLYNOMIAL,       // Novel quasi-polynomial decomposition
-    BALANCED_SEPARATOR,     // Balanced separator based
-    DEGREE_BASED,           // Degree-based clustering
-    HYBRID                  // Combination of techniques
-};
-
-struct GraphComponent {
-    std::vector<size_t> vertices;           // Vertices in this component
-    std::vector<std::pair<size_t, size_t>> internal_edges;  // Edges within component
-    std::vector<size_t> boundary_vertices;  // Vertices connecting to other components
-    double density;                         // Edge density of component
-    size_t treewidth;                       // Tree width estimate
-    bool is_quasi_solvable;                 // Can be solved in quasi-polynomial time
-    std::string decomposition_method;      // Method used to create this component
-};
-
-struct DecompositionResult {
-    std::vector<GraphComponent> components;     // All components
-    DecompositionType type;                      // Type of decomposition used
-    size_t total_components;                     // Number of components created
-    double decomposition_quality;               // Quality measure (0.0 to 1.0)
-    std::chrono::milliseconds decomposition_time;
-    size_t vertices_processed;                   // Total vertices processed
-    size_t edges_processed;                      // Total edges processed
-    bool preserves_optimality;                   // True if optimal solution can be reconstructed
-    double approximation_factor;                // Approximation factor if optimality not preserved
-    std::vector<std::vector<size_t>> component_hierarchy;  // Hierarchy of components
-};
 
 struct SeparatorInfo {
     std::vector<size_t> separator_vertices;     // Separator vertices
@@ -177,9 +147,12 @@ private:
     // Quasi-polynomial decomposition components
     std::vector<GraphComponent> applyQuasiDecomposition(const Graph& graph);
     GraphComponent extractQuasiComponent(const Graph& graph, size_t start_vertex,
-                                        std::vector<bool>& processed);
+                                        std::vector<bool>& processed, size_t target_size);
     bool maintainsQuasiProperties(const GraphComponent& component, size_t new_vertex,
                                  const Graph& graph);
+    double calculateQuasiPriority(size_t vertex, const Graph& graph, const std::unordered_set<size_t>& current_component);
+    double calculateStructuralImportance(size_t vertex, const Graph& graph);
+    std::vector<size_t> getVerticesByStructuralImportance(const Graph& graph);
     
     // Tree decomposition utilities
     std::vector<std::vector<size_t>> buildTreeDecomposition(const Graph& graph);
@@ -194,6 +167,7 @@ private:
     // Modular decomposition
     std::vector<GraphComponent> findModules(const Graph& graph);
     bool isModule(const std::vector<size_t>& vertices, const Graph& graph);
+    bool haveIdenticalExternalNeighborhoods(size_t v1, size_t v2, const Graph& graph);
     
     // Degree-based decomposition
     std::vector<GraphComponent> degreeBasedClustering(const Graph& graph);
@@ -203,6 +177,7 @@ private:
     double assessComponentQuality(const GraphComponent& component, const Graph& graph);
     double calculateDecompositionQuality(const std::vector<GraphComponent>& components,
                                         const Graph& graph);
+    bool checkOptimalityPreservation(const DecompositionResult& result);
     
     // Utility functions
     bool isBalancedSeparator(const SeparatorInfo& separator);
@@ -217,6 +192,10 @@ private:
     size_t calculateVertexConnectivity(const Graph& graph);
     double calculateAveragePathLength(const Graph& graph);
     
+    // Tree width utilities
+    size_t estimateTreeWidthOfVertices(const std::vector<size_t>& vertices, const Graph& graph);
+    size_t findMaximumCliqueSize(const std::vector<size_t>& vertices, const Graph& graph);
+    
     // Optimization utilities
     void optimizeComponentSizes(std::vector<GraphComponent>& components);
     void mergeSmallComponents(std::vector<GraphComponent>& components);
@@ -224,7 +203,7 @@ private:
                              const Graph& graph);
     
     // Caching for performance
-    std::unordered_map<size_t, std::vector<size_t>> degree_cache_;
+    std::unordered_map<size_t, size_t> degree_cache_;
     std::unordered_map<size_t, std::vector<size_t>> neighbor_cache_;
     bool cache_valid_;
     

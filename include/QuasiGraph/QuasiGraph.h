@@ -15,6 +15,8 @@
 #include "IndependentSet.h"
 #include "StructuralDecomposition.h"
 #include "SocialNetworkAnalysis.h"
+#include "StructuralDecomposition.h"
+#include "SocialNetworkAnalysis.h"
 
 #include <vector>
 #include <memory>
@@ -74,13 +76,13 @@ public:
      * Analyze social network properties
      * @return Social network analysis results
      */
-    SocialNetworkMetrics analyzeSocialNetwork();
+    NetworkMetrics analyzeSocialNetwork();
     
     /**
      * Get performance metrics
      * @return Performance statistics
      */
-    PerformanceMetrics getPerformanceMetrics() const;
+    ComplexityEstimate getPerformanceMetrics() const;
     
     /**
      * Clear all graph data
@@ -102,10 +104,10 @@ public:
 private:
     std::unique_ptr<Graph> graph_;
     std::unique_ptr<QuasiPolynomial> quasi_optimizer_;
-    std::unique_ptr<IndependentSet> independent_set_solver_;
+    std::unique_ptr<IndependentSetSolver> independent_set_solver_;
     std::unique_ptr<StructuralDecomposition> decomposition_engine_;
     
-    mutable PerformanceMetrics performance_;
+    mutable ComplexityEstimate performance_;
     
     void initializeComponents();
     void updatePerformanceMetrics(const std::string& operation, 

@@ -14,7 +14,7 @@ HEADERS = $(wildcard include/QuasiGraph/*.h)
 LIBRARY = libquasigraph.a
 EXAMPLES = examples/quasigraph_examples
 BENCHMARK = benchmarks/quasigraph_bench
-TESTS = tests/simple_tests
+TESTS = tests/basic_tests
 
 .PHONY: all clean library examples benchmark tests install
 
@@ -26,7 +26,7 @@ library: $(LIBRARY)
 $(LIBRARY): $(OBJECTS)
 	@echo "Creating static library..."
 	ar rcs $@ $^
-	@echo "✅ Library created: $(LIBRARY)"
+	@echo "Library created: $(LIBRARY)"
 
 # Build examples
 examples: $(EXAMPLES)
@@ -34,7 +34,7 @@ examples: $(EXAMPLES)
 $(EXAMPLES): examples/main.cpp $(LIBRARY)
 	@echo "Building examples..."
 	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lquasigraph
-	@echo "✅ Examples built: $(EXAMPLES)"
+	@echo "Examples built: $(EXAMPLES)"
 
 # Build benchmark
 benchmark: $(BENCHMARK)
@@ -42,15 +42,15 @@ benchmark: $(BENCHMARK)
 $(BENCHMARK): benchmarks/benchmark.cpp $(LIBRARY)
 	@echo "Building benchmark..."
 	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lquasigraph
-	@echo "✅ Benchmark built: $(BENCHMARK)"
+	@echo "Benchmark built: $(BENCHMARK)"
 
 # Build tests
 tests: $(TESTS)
 
-$(TESTS): tests/simple_test_runner.cpp $(LIBRARY)
+$(TESTS): tests/basic_tests.cpp $(LIBRARY)
 	@echo "Building tests..."
 	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lquasigraph
-	@echo "✅ Tests built: $(TESTS)"
+	@echo "Tests built: $(TESTS)"
 
 # Compile source files
 %.o: %.cpp $(HEADERS)
@@ -78,22 +78,22 @@ install: library
 	sudo mkdir -p /usr/local/include/QuasiGraph
 	sudo cp include/QuasiGraph/*.h /usr/local/include/QuasiGraph/
 	sudo cp $(LIBRARY) /usr/local/lib/
-	@echo "✅ QuasiGraph installed to /usr/local"
+	@echo "QuasiGraph installed to /usr/local"
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
 	rm -f $(OBJECTS) $(LIBRARY) $(EXAMPLES) $(BENCHMARK) $(TESTS)
 	rm -f benchmark_report.txt
-	@echo "✅ Clean completed"
+	@echo "Clean completed"
 
 # Development targets
 dev-build: clean all test
-	@echo "🚀 Development build completed successfully!"
+	@echo "Development build completed successfully!"
 
 release-build: CXXFLAGS += -DNDEBUG
 release-build: clean all
-	@echo "🚀 Release build completed!"
+	@echo "Release build completed!"
 
 # Quick build for development
 quick: $(LIBRARY) $(TESTS)

@@ -251,7 +251,7 @@ private:
             std::cout << "Average execution time: " << avg_time.count() << " μs" << std::endl;
         }
         
-        std::cout << "\nQuasiGraph: PERFORMANCE VALIDATED ✅" << std::endl;
+        std::cout << "\nQuasiGraph: PERFORMANCE VALIDATED" << std::endl;
     }
 };
 
@@ -263,11 +263,11 @@ int main() {
         BenchmarkSuite suite;
         suite.runAllBenchmarks();
         
-        std::cout << "\n✅ All benchmarks completed successfully!" << std::endl;
-        std::cout << "📊 Check benchmark_report.txt for detailed results." << std::endl;
+        std::cout << "\nAll benchmarks completed successfully!" << std::endl;
+        std::cout << "Check benchmark_report.txt for detailed results." << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "❌ Benchmark failed with error: " << e.what() << std::endl;
+        std::cerr << "Benchmark failed with error: " << e.what() << std::endl;
         return 1;
     }
     

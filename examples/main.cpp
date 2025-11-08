@@ -8,6 +8,7 @@
 #include "QuasiGraph/QuasiGraph.h"
 #include "QuasiGraph/IndependentSet.h"
 #include "QuasiGraph/StructuralDecomposition.h"
+#include <random>
 #include "QuasiGraph/SocialNetworkAnalysis.h"
 #include <iostream>
 #include <vector>
@@ -20,12 +21,7 @@ void demonstrateIndependentSet() {
     std::cout << "\n=== Independent Set Problem Demo ===" << std::endl;
     
     // Create a sample graph
-    QuasiGraphEngine engine;
-    
-    // Add vertices representing people in a conflict network
-    for (size_t i = 0; i < 20; ++i) {
-        engine.addVertex(i);
-    }
+    Graph graph(20);
     
     // Add edges representing conflicts (cannot work together)
     std::vector<std::pair<size_t, size_t>> conflicts = {
@@ -36,38 +32,34 @@ void demonstrateIndependentSet() {
     };
     
     for (const auto& conflict : conflicts) {
-        engine.addEdge(conflict.first, conflict.second);
+        graph.addEdge(conflict.first, conflict.second);
     }
     
     std::cout << "Created conflict network with 20 people and " << conflicts.size() << " conflicts" << std::endl;
     
     // Solve using quasi-polynomial algorithm
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto independent_set = engine.findMaximumIndependentSet();
+    IndependentSetSolver solver;
+    auto result = solver.findMaximumIndependentSet(graph);
     auto end_time = std::chrono::high_resolution_clock::now();
     
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     
-    std::cout << "Maximum independent set size: " << independent_set.size() << std::endl;
+    std::cout << "Maximum independent set size: " << result.set_size << std::endl;
     std::cout << "People who can work together: ";
-    for (size_t person : independent_set) {
+    for (size_t person : result.independent_set) {
         std::cout << person << " ";
     }
     std::cout << std::endl;
     std::cout << "Solving time: " << duration.count() << " microseconds" << std::endl;
-    std::cout << "✅ Solved using quasi-polynomial algorithm!" << std::endl;
 }
 
 void demonstrateStructuralDecomposition() {
     std::cout << "\n=== Structural Decomposition Demo ===" << std::endl;
     
     // Create a complex graph
-    QuasiGraphEngine engine;
     size_t graph_size = 100;
-    
-    for (size_t i = 0; i < graph_size; ++i) {
-        engine.addVertex(i);
-    }
+    Graph graph(graph_size);
     
     // Create a more complex network structure
     std::random_device rd;
@@ -77,7 +69,7 @@ void demonstrateStructuralDecomposition() {
     for (size_t i = 0; i < graph_size; ++i) {
         for (size_t j = i + 1; j < graph_size; ++j) {
             if (edge_prob(gen) < 0.05) { // 5% edge probability
-                engine.addEdge(i, j);
+                graph.addEdge(i, j);
             }
         }
     }
@@ -86,7 +78,8 @@ void demonstrateStructuralDecomposition() {
     
     // Apply quasi-polynomial decomposition
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto decomposition = engine.decomposeGraph();
+    StructuralDecomposition decomp_engine;
+    auto decomposition = decomp_engine.decompose(graph);
     auto end_time = std::chrono::high_resolution_clock::now();
     
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
@@ -97,8 +90,6 @@ void demonstrateStructuralDecomposition() {
               << decomposition.decomposition_quality << std::endl;
     std::cout << "- Processing time: " << duration.count() << " milliseconds" << std::endl;
     std::cout << "- Optimality preserved: " << (decomposition.preserves_optimality ? "YES" : "NO") << std::endl;
-    
-    std::cout << "✅ Graph decomposed using quasi-polynomial techniques!" << std::endl;
 }
 
 void demonstrateSocialNetworkAnalysis() {
@@ -197,8 +188,6 @@ void demonstrateSocialNetworkAnalysis() {
     std::cout << "- Clustering coefficient: " << std::setprecision(3) 
               << metrics.clustering_coefficient << std::endl;
     std::cout << "- Largest component size: " << metrics.largest_component_size << std::endl;
-    
-    std::cout << "✅ Social network analysis completed!" << std::endl;
 }
 
 void demonstratePerformanceComparison() {
@@ -214,21 +203,19 @@ void demonstratePerformanceComparison() {
     
     for (size_t size : test_sizes) {
         // Create test graph
-        QuasiGraphEngine engine;
-        for (size_t i = 0; i < size; ++i) {
-            engine.addVertex(i);
-        }
+        Graph graph(size);
         
         // Add some edges
         for (size_t i = 0; i < size; ++i) {
             for (size_t j = i + 1; j < std::min(i + 5, size); ++j) {
-                engine.addEdge(i, j);
+                graph.addEdge(i, j);
             }
         }
         
         // Time quasi-polynomial algorithm
         auto start = std::chrono::high_resolution_clock::now();
-        auto result_quasi = engine.findMaximumIndependentSet();
+        IndependentSetSolver solver;
+        auto result_quasi = solver.findMaximumIndependentSet(graph);
         auto end = std::chrono::high_resolution_clock::now();
         auto time_quasi = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         
@@ -241,8 +228,6 @@ void demonstratePerformanceComparison() {
                   << std::setw(15) << time_traditional.count() << std::setw(11) 
                   << std::fixed << std::setprecision(1) << speedup << "x" << std::endl;
     }
-    
-    std::cout << "\n✅ Performance comparison demonstrates significant speedup!" << std::endl;
 }
 
 void demonstrateRealWorldApplication() {
@@ -250,13 +235,8 @@ void demonstrateRealWorldApplication() {
     std::cout << "Scenario: Optimizing project team assignments" << std::endl;
     
     // Create a company collaboration network
-    QuasiGraphEngine engine;
     size_t employee_count = 30;
-    
-    // Add employees
-    for (size_t i = 0; i < employee_count; ++i) {
-        engine.addVertex(i);
-    }
+    Graph graph(employee_count);
     
     // Add collaboration conflicts (people who cannot work together)
     std::vector<std::pair<size_t, size_t>> conflicts = {
@@ -272,7 +252,7 @@ void demonstrateRealWorldApplication() {
     };
     
     for (const auto& conflict : conflicts) {
-        engine.addEdge(conflict.first, conflict.second);
+        graph.addEdge(conflict.first, conflict.second);
     }
     
     std::cout << "Company has " << employee_count << " employees with " 
@@ -280,22 +260,23 @@ void demonstrateRealWorldApplication() {
     
     // Find optimal team assignment
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto optimal_team = engine.findMaximumIndependentSet();
+    IndependentSetSolver solver;
+    auto result = solver.findMaximumIndependentSet(graph);
     auto end_time = std::chrono::high_resolution_clock::now();
     
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     
     std::cout << "\nOptimization Results:" << std::endl;
-    std::cout << "Maximum conflict-free team size: " << optimal_team.size() << " employees" << std::endl;
+    std::cout << "Maximum conflict-free team size: " << result.set_size << " employees" << std::endl;
     std::cout << "Team members: ";
-    for (size_t employee : optimal_team) {
+    for (size_t employee : result.independent_set) {
         std::cout << employee << " ";
     }
     std::cout << std::endl;
     std::cout << "Optimization time: " << duration.count() << " microseconds" << std::endl;
     
     // Calculate efficiency
-    double efficiency = static_cast<double>(optimal_team.size()) / employee_count * 100.0;
+    double efficiency = static_cast<double>(result.set_size) / employee_count * 100.0;
     std::cout << "Team utilization efficiency: " << std::fixed << std::setprecision(1) 
               << efficiency << "%" << std::endl;
     
@@ -304,8 +285,6 @@ void demonstrateRealWorldApplication() {
     std::cout << "- Maximized team productivity potential" << std::endl;
     std::cout << "- Saved hours of manual team planning" << std::endl;
     std::cout << "- Data-driven decision making" << std::endl;
-    
-    std::cout << "\n✅ Real-world application successfully optimized!" << std::endl;
 }
 
 int main() {
@@ -322,21 +301,8 @@ int main() {
         demonstratePerformanceComparison();
         demonstrateRealWorldApplication();
         
-        std::cout << "\n========================================" << std::endl;
-        std::cout << "    🎉 ALL DEMOS COMPLETED SUCCESSFULLY!" << std::endl;
-        std::cout << "========================================" << std::endl;
-        
-        std::cout << "\nKey Takeaways:" << std::endl;
-        std::cout << "✅ Quasi-polynomial algorithms solve NP-complete problems efficiently" << std::endl;
-        std::cout << "✅ Structural decomposition enables scalable graph processing" << std::endl;
-        std::cout << "✅ Social network analysis provides actionable insights" << std::endl;
-        std::cout << "✅ Performance improvements are significant and measurable" << std::endl;
-        std::cout << "✅ Real-world applications deliver immediate business value" << std::endl;
-        
-        std::cout << "\nQuasiGraph is ready for production deployment! 🚀" << std::endl;
-        
     } catch (const std::exception& e) {
-        std::cerr << "❌ Demo failed with error: " << e.what() << std::endl;
+        std::cerr << "Demo failed with error: " << e.what() << std::endl;
         return 1;
     }
     

@@ -19,6 +19,20 @@ struct GraphComponent {
     bool is_quasi_solvable;
     size_t treewidth;
     double density;
+    std::vector<std::pair<size_t, size_t>> internal_edges;
+    std::vector<size_t> boundary_vertices;
+};
+
+enum class OptimizationLevel {
+    FAST,
+    BALANCED,
+    OPTIMAL
+};
+
+enum class DecompositionType {
+    AUTO,
+    DIRECT,
+    QUASI_POLYNOMIAL
 };
 
 struct OptimizationResult {
@@ -30,6 +44,10 @@ struct OptimizationResult {
     std::string error_message;
     bool is_feasible;
     double optimality_gap;
+    std::chrono::milliseconds decomposition_time;
+    std::chrono::milliseconds optimization_time;
+    double final_objective;
+    size_t iterations_used;
 };
 
 struct DecompositionResult {
@@ -37,17 +55,16 @@ struct DecompositionResult {
     std::chrono::milliseconds time_used;
     DecompositionType decomposition_type;
     size_t components_found;
-};
-
-enum class OptimizationLevel {
-    FAST,
-    BALANCED,
-    OPTIMAL
-};
-
-enum class DecompositionType {
-    DIRECT,
-    QUASI_POLYNOMIAL
+    std::vector<GraphComponent> components;
+    DecompositionType type;
+    bool preserves_optimality;
+    double approximation_factor;
+    double decomposition_quality;
+    size_t vertices_processed;
+    size_t edges_processed;
+    std::chrono::milliseconds decomposition_time;
+    size_t total_components;
+    std::vector<std::vector<size_t>> component_hierarchy;
 };
 
 struct ComplexityEstimate {
