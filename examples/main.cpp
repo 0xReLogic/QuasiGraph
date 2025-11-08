@@ -290,7 +290,7 @@ void demonstrateRealWorldApplication() {
 int main() {
     std::cout << "========================================" << std::endl;
     std::cout << "    QuasiGraph Examples & Demos" << std::endl;
-    std::cout << "    2025 Research Algorithms in Action" << std::endl;
+    std::cout << "    Graph Optimization Algorithms" << std::endl;
     std::cout << "========================================" << std::endl;
     
     try {

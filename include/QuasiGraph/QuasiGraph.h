@@ -1,13 +1,9 @@
 #pragma once
 
 /**
- * QuasiGraph - Main Header File
+ * QuasiGraph Library Header
  * 
- * Pioneering implementation of quasi-polynomial time algorithms
- * for graph optimization based on 2025 research breakthroughs.
- * 
- * Author: QuasiGraph Team
- * License: MIT
+ * Complete header file including all QuasiGraph components
  */
 
 #include "Graph.h"

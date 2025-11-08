@@ -1,16 +1,17 @@
 /**
  * Graph Implementation
  * 
- * Core graph data structure for QuasiGraph algorithms.
+ * Core graph data structure with bit-parallel optimizations
  */
 
 #include "QuasiGraph/Graph.h"
 #include <stdexcept>
+#include <algorithm>
 
 namespace QuasiGraph {
 
 Graph::Graph(bool directed) 
-    : directed_(directed), edge_count_(0) {
+    : directed_(directed), edge_count_(0), use_bitset_(false), max_vertex_id_(0) {
 }
 
 void Graph::addVertex(size_t vertex_id) {
@@ -120,6 +121,80 @@ void Graph::updateEdgeCount() {
     if (!directed_) {
         edge_count_ /= 2;
     }
+}
+
+// Bit-parallel optimization functions
+void Graph::enableBitParallelMode() {
+    if (use_bitset_) return; // Already enabled
+    
+    // Find max vertex ID
+    max_vertex_id_ = 0;
+    for (size_t v : vertices_) {
+        max_vertex_id_ = std::max(max_vertex_id_, v);
+    }
+    
+    // Build vertex mapping
+    vertex_to_index_.clear();
+    index_to_vertex_.clear();
+    index_to_vertex_.reserve(vertices_.size());
+    
+    size_t index = 0;
+    for (size_t v : vertices_) {
+        vertex_to_index_[v] = index;
+        index_to_vertex_.push_back(v);
+        index++;
+    }
+    
+    // Initialize bitsets
+    bitset_adjacency_.clear();
+    bitset_adjacency_.resize(vertices_.size(), BitSet(vertices_.size()));
+    
+    // Build bitset adjacency
+    buildBitSetRepresentation();
+    
+    use_bitset_ = true;
+}
+
+void Graph::buildBitSetRepresentation() {
+    for (size_t i = 0; i < index_to_vertex_.size(); ++i) {
+        size_t vertex = index_to_vertex_[i];
+        
+        if (adjacency_list_.find(vertex) != adjacency_list_.end()) {
+            for (const auto& [neighbor, weight] : adjacency_list_[vertex]) {
+                if (vertex_to_index_.find(neighbor) != vertex_to_index_.end()) {
+                    size_t neighbor_index = vertex_to_index_[neighbor];
+                    bitset_adjacency_[i].set(neighbor_index);
+                }
+            }
+        }
+    }
+}
+
+size_t Graph::getCommonNeighborCount(size_t v1, size_t v2) const {
+    if (!use_bitset_) {
+        // Fallback to standard implementation
+        auto neighbors1 = getNeighbors(v1);
+        auto neighbors2 = getNeighbors(v2);
+        
+        std::unordered_set<size_t> set1(neighbors1.begin(), neighbors1.end());
+        size_t count = 0;
+        for (size_t n : neighbors2) {
+            if (set1.count(n)) count++;
+        }
+        return count;
+    }
+    
+    // Bit-parallel SIMD optimized path
+    if (vertex_to_index_.find(v1) == vertex_to_index_.end() ||
+        vertex_to_index_.find(v2) == vertex_to_index_.end()) {
+        return 0;
+    }
+    
+    size_t idx1 = vertex_to_index_.at(v1);
+    size_t idx2 = vertex_to_index_.at(v2);
+    
+    // Hardware POPCNT + SIMD intersection
+    return bitset_adjacency_[idx1].intersect_count(bitset_adjacency_[idx2]);
 }
 
 } // namespace QuasiGraph

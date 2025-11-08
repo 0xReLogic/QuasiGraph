@@ -44,7 +44,7 @@ struct BranchAndBoundNode {
 };
 
 enum class IndependentSetAlgorithm {
-    QUASI_POLYNOMIAL,    // Breakthrough quasi-polynomial algorithm
+    QUASI_POLYNOMIAL,    // Quasi-polynomial algorithm
     BRANCH_AND_BOUND,    // Enhanced branch and bound
     APPROXIMATION,       // Fast approximation algorithm
     HYBRID               // Combination of approaches

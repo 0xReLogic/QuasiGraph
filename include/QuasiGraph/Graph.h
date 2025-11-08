@@ -3,15 +3,15 @@
 /**
  * Graph Data Structure
  * 
- * Core graph representation for QuasiGraph algorithms.
- * Supports both directed and undirected graphs with efficient
- * operations for quasi-polynomial algorithms.
+ * Core graph representation with support for both directed and
+ * undirected graphs. Includes bit-parallel SIMD optimizations.
  */
 
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
+#include "BitSet.h"
 
 namespace QuasiGraph {
 
@@ -98,6 +98,25 @@ public:
      * @return True if no vertices
      */
     bool isEmpty() const;
+    
+    /**
+     * Enable bit-parallel mode for SIMD optimizations
+     * Note: Only for unweighted graphs
+     */
+    void enableBitParallelMode();
+    
+    /**
+     * Get common neighbor count (bit-parallel optimized)
+     * @param v1 First vertex
+     * @param v2 Second vertex
+     * @return Number of common neighbors
+     */
+    size_t getCommonNeighborCount(size_t v1, size_t v2) const;
+    
+    /**
+     * Check if using bit-parallel mode
+     */
+    bool isBitParallelMode() const { return use_bitset_; }
 
 private:
     bool directed_;
@@ -105,7 +124,15 @@ private:
     std::unordered_map<size_t, std::unordered_map<size_t, double>> adjacency_list_;
     size_t edge_count_;
     
+    // Bit-parallel adjacency representation
+    bool use_bitset_;
+    size_t max_vertex_id_;
+    std::vector<BitSet> bitset_adjacency_;
+    std::unordered_map<size_t, size_t> vertex_to_index_;
+    std::vector<size_t> index_to_vertex_;
+    
     void updateEdgeCount();
+    void buildBitSetRepresentation();
 };
 
 } // namespace QuasiGraph

@@ -118,7 +118,7 @@ DecompositionResult StructuralDecomposition::quasiPolynomialDecomposition(const 
     DecompositionResult result;
     
     // Apply the novel quasi-polynomial decomposition algorithm
-    // This is the core breakthrough from Lokshtanov's 2025 research
+    // Core decomposition logic
     
     auto components = applyQuasiDecomposition(graph);
     

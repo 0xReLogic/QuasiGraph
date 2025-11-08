@@ -1,10 +1,7 @@
 /**
  * IndependentSet Problem Implementation
  * 
- * Breakthrough quasi-polynomial implementation for the
- * Independent Set Problem - NP-complete to quasi-polynomial
- * 
- * Based on Lokshtanov, Chudnovsky (2025) NSF-funded research
+ * Implements multiple algorithms for the Independent Set Problem
  */
 
 #include "QuasiGraph/IndependentSet.h"
@@ -53,7 +50,7 @@ IndependentSetResult IndependentSetSolver::findMaximumIndependentSet(const Graph
         switch (algorithm_) {
             case IndependentSetAlgorithm::QUASI_POLYNOMIAL:
                 algorithm_result = solveQuasiPolynomial(graph);
-                result.algorithm_used = "Quasi-Polynomial (Lokshtanov 2025)";
+                result.algorithm_used = "Quasi-Polynomial";
                 break;
                 
             case IndependentSetAlgorithm::BRANCH_AND_BOUND:
@@ -107,7 +104,7 @@ IndependentSetResult IndependentSetSolver::solveQuasiPolynomial(const Graph& gra
     auto start_time = std::chrono::high_resolution_clock::now();
     
     IndependentSetResult result;
-    result.algorithm_used = "Quasi-Polynomial (Lokshtanov 2025)";
+    result.algorithm_used = "Quasi-Polynomial";
     
     size_t vertex_count = graph.getVertexCount();
     

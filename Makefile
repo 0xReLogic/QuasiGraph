@@ -72,6 +72,16 @@ run-benchmark: benchmark
 	@echo "Running benchmark..."
 	./$(BENCHMARK)
 
+# Bit-parallel benchmark 
+bitparallel-bench: library
+	@echo "Building bit-parallel benchmark..."
+	$(CXX) $(CXXFLAGS) -mavx2 -Iinclude -o benchmarks/bitparallel_bench benchmarks/bitparallel_bench.cpp -L. -lquasigraph
+	@echo "Bit-parallel benchmark built: benchmarks/bitparallel_bench"
+
+run-bitparallel: bitparallel-bench
+	@echo "Running bit-parallel SIMD AVX2 benchmark..."
+	./benchmarks/bitparallel_bench
+
 # Install (simple version)
 install: library
 	@echo "Installing QuasiGraph..."

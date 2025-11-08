@@ -1,14 +1,9 @@
 #pragma once
 
 /**
- * Social Network Analysis Module
+ * Social Network Analysis Implementation
  * 
- * Advanced social network analysis using quasi-polynomial algorithms
- * for real-world applications in social media, organizational networks,
- * and community detection.
- * 
- * Based on 2025 research breakthroughs in graph optimization
- * applied to social network structures.
+ * Social network analytics and community detection
  */
 
 #include <vector>
