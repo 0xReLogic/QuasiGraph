@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - uses: actions/checkout@v4
@@ -15,11 +15,11 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential g++-12 cmake
+        sudo apt-get install -y build-essential g++-13 cmake
     
     - name: Build Release
       run: |
-        export CXX=g++-12
+        export CXX=g++-13
         cmake -B build -DCMAKE_BUILD_TYPE=Release
         cmake --build build --config Release
     
